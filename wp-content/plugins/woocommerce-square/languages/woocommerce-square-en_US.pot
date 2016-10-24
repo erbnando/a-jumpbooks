@@ -1,0 +1,439 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WooCommerce Square\n"
+"POT-Creation-Date: 2016-07-25 12:28-0800\n"
+"PO-Revision-Date: 2016-07-25 12:28-0800\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.7.3\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;esc_attr__;"
+"esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c;_n_noop:1,2;"
+"_nx_noop:3c,1,2;__ngettext_noop:1,2\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.js\n"
+
+#: includes/class-wc-square-admin-integration.php:20
+#: includes/payment/class-wc-square-gateway.php:16
+msgid "Square"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:21
+msgid ""
+"Connect with Square to start syncing your products and inventory and also "
+"accept credit card and debit card payments in your checkout."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:53
+msgid "Business Location"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:55
+msgid ""
+"Select the location you wish to link to this site. Will be enabled if you "
+"have locations set in Square."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:57
+msgid "Select a Location"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:61
+msgid "Notification Email"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:63
+msgid ""
+"Enter the email(s) to be notified when a sync has ended.  Separate each "
+"email with a comma."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:69
+#: includes/payment/class-wc-square-gateway.php:142
+msgid "Logging"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:70
+#: includes/payment/class-wc-square-gateway.php:143
+msgid "Log debug messages"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:72
+#: includes/payment/class-wc-square-gateway.php:145
+msgid "Save debug messages to the WooCommerce System Status log."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:76
+msgid "Synchronization"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:78
+msgid ""
+"Determine which aspects of your product catalog to synchronize between "
+"WooCommerce and Square. Products are matched on SKU initially and will be "
+"created if not found."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:81
+msgid "Enabled"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:83
+msgid "Products"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:84
+msgid ""
+"Basic Product information will be synced, excluding Categories and Inventory."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:88
+msgid "Include Categories"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:90
+msgid "Sync Categories"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:91
+msgid ""
+"Categories will sync on creation or update, and Products will have their "
+"Categories synced."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:95
+msgid "Include Inventory"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:97
+msgid "Sync Inventory"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:98
+msgid "Inventory will sync on manual update or after a Product is ordered."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:102
+msgid "Include Images"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:104
+msgid "Sync Images"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:105
+msgid "Product Image will be synced."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:109
+msgid "Square Inventory Sync"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:111
+msgid "Enable"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:112
+msgid ""
+"For automatic inventory syncing from Square to WooCommerce, this needs to be "
+"enabled. It will poll the inventory from Square on an hourly basis."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:172
+msgid "Connect/Disconnect"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:177
+msgid "Disconnect from Square"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:185
+msgid "Connect with Square"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:200
+msgid "Initiate a Manual Sync"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:204
+msgid "WC &rarr; Square Sync"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:205
+msgid "Click button to perform a one time sync from WooCommerce to Square."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:208
+msgid "WC &rarr; Square"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:213
+msgid "Square &rarr; WC Sync"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:214
+msgid "Click button to perform a one time sync from Square to WooCommerce."
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:217
+msgid "Square &rarr; WC"
+msgstr ""
+
+#: includes/class-wc-square-admin-integration.php:241
+#: includes/class-wc-square-admin-integration.php:276
+#: includes/class-wc-square-bulk-sync-handler.php:42
+#: includes/class-wc-square-bulk-sync-handler.php:163
+#: woocommerce-square.php:93 woocommerce-square.php:105
+msgid "Cheatin&#8217; huh?"
+msgstr ""
+
+#: includes/class-wc-square-bulk-sync-handler.php:62
+#: includes/class-wc-square-bulk-sync-handler.php:177
+msgid "Product Sync is disabled. Sync aborted."
+msgstr ""
+
+#: includes/class-wc-square-bulk-sync-handler.php:136
+#: includes/class-wc-square-bulk-sync-handler.php:246
+msgid "Sync Completed"
+msgstr ""
+
+#: includes/class-wc-square-bulk-sync-handler.php:141
+#: includes/class-wc-square-bulk-sync-handler.php:251
+msgid "Sync completed"
+msgstr ""
+
+#: includes/class-wc-square-bulk-sync-handler.php:258
+msgid "No Products to Sync."
+msgstr ""
+
+#: includes/class-wc-square-bulk-sync-handler.php:467
+#, php-format
+msgid "%s - WooCommerce Square Sync Operation"
+msgstr ""
+
+#: includes/class-wc-square-bulk-sync-handler.php:471
+#, php-format
+msgid "%s"
+msgstr ""
+
+#: includes/class-wc-square-utils.php:44
+msgid "Regular"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:17
+msgid ""
+"Square works by adding payments fields in an iframe and then sending the "
+"details to Square for verification and processing."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:43
+msgid ""
+"STAGING MODE ENABLED. In staging mode, you can use the card number "
+"4111111111111111 with any CVC and a valid expiration date."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:80
+#, php-format
+msgid ""
+"Square is enabled, but the <a href=\"%s\">force SSL option</a> is disabled; "
+"your checkout is not secured! Please enable SSL and ensure your server has a "
+"valid SSL certificate."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:109
+msgid "Enable/Disable"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:110
+msgid "Enable Square"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:116
+msgid "Title"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:118
+msgid "This controls the title which the user sees during checkout."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:119
+msgid "Credit card (Square)"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:122
+msgid "Description"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:124
+msgid "This controls the description which the user sees during checkout."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:125
+msgid "Pay with your credit card via Square."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:128
+msgid "Delay Capture"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:129
+msgid "Enable Delay Capture"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:131
+msgid ""
+"When enabled, the request will only perform an Auth on the provided card. "
+"You can then later perform either a Capture or Void."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:135
+msgid "Create Customer"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:136
+msgid "Enable Create Customer"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:138
+msgid ""
+"When enabled, processing a payment will create a customer profile on Square."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:174
+msgid "Card Number"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:179
+msgid "Expiry (MM/YY)"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:180
+#: includes/payment/class-wc-square-gateway.php:216
+msgid "MM / YY"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:184
+msgid "Card Code"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:185
+#: includes/payment/class-wc-square-gateway.php:217
+msgid "CVV"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:189
+#: includes/payment/class-wc-square-gateway.php:190
+#: includes/payment/class-wc-square-gateway.php:218
+msgid "Card Postal Code"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:215
+msgid "•••• •••• •••• ••••"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:274
+#: includes/payment/class-wc-square-gateway.php:281
+msgid ""
+"Error: Square was unable to complete the transaction. Please try again later "
+"or use another means of payment."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:286
+msgid "Payment Error: "
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:312
+#: includes/payment/class-wc-square-payments.php:129
+#, php-format
+msgid "Square charge complete (Charge ID: %s)"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:321
+#, php-format
+msgid ""
+"Square charge authorized (Authorized ID: %s). Process order to take payment, "
+"or cancel to remove the pre-authorization."
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:343
+#: includes/payment/class-wc-square-gateway.php:512
+#, php-format
+msgid "Error: %s"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:375
+msgid "Guest"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:394
+#: includes/payment/class-wc-square-gateway.php:395
+#: includes/payment/class-wc-square-gateway.php:400
+#: includes/payment/class-wc-square-gateway.php:401
+#, php-format
+msgid "Error creating customer: %s"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:407
+#, php-format
+msgid "Customer created on Square: %s"
+msgstr ""
+
+#: includes/payment/class-wc-square-gateway.php:500
+#, php-format
+msgid "Refunded %s - Refund ID: %s - Reason: %s"
+msgstr ""
+
+#: includes/payment/class-wc-square-payments.php:81
+msgid "Capture Charge"
+msgstr ""
+
+#: includes/payment/class-wc-square-payments.php:121
+#: includes/payment/class-wc-square-payments.php:125
+msgid "Unable to capture charge!"
+msgstr ""
+
+#: includes/payment/class-wc-square-payments.php:135
+#, php-format
+msgid "Error unable to capture charge: %s"
+msgstr ""
+
+#: includes/payment/class-wc-square-payments.php:165
+#: includes/payment/class-wc-square-payments.php:168
+msgid "Unable to void charge!"
+msgstr ""
+
+#: includes/payment/class-wc-square-payments.php:172
+#, php-format
+msgid "Square charge voided! (Charge ID: %s)"
+msgstr ""
+
+#: includes/payment/class-wc-square-payments.php:178
+#, php-format
+msgid "Unable to void charge!: %s"
+msgstr ""
+
+#: woocommerce-square.php:332
+#, php-format
+msgid ""
+"WooCommerce Square Plugin requires WooCommerce to be installed and active. "
+"You can download %s here."
+msgstr ""
+
+#: woocommerce-square.php:350
+#, php-format
+msgid ""
+"WooCommerce Square is almost ready. To get started, %sconnect your Square "
+"Account.%s"
+msgstr ""
+
+#: woocommerce-square.php:354
+#, php-format
+msgid ""
+"WooCommerce Square is almost ready. Please %sset your business location.%s"
+msgstr ""

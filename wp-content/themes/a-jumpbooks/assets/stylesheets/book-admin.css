@@ -1,0 +1,12 @@
+#acf_after_title-sortables .acf-postbox{
+  border: 2px solid lightgray;
+}
+
+#acf_after_title-sortables .acf-postbox .hndle {
+  background-color: lightgray;
+  border-bottom: none;
+}
+
+#acf_after_title-sortables .acf-postbox > .inside > div {
+  border-top: 2px solid lightgray;
+}

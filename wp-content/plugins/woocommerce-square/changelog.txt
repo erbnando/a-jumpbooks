@@ -1,0 +1,11 @@
+*** WooCommerce Square Changelog ***
+
+2016.08.04 - version 1.0.2
+* Update - HTTP protocol to version 1.1 to prevent timeouts.
+
+2016.08.01 - version 1.0.1
+* Tweak - Make credit card form fields more responsive in mobile devices.
+* Fix - Square list endpoints may return duplicates, so put in place a check for that.
+
+2016.07.26 - version 1.0.0
+* First Release
