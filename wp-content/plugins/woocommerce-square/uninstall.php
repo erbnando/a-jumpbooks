@@ -10,5 +10,6 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 delete_option( 'wc_square_endpoint_set' );
 delete_option( 'woocommerce_squareconnect_settings' );
+delete_option( 'wc_square_polling' );
 delete_transient( 'wc_square_locations' );
 delete_option( 'woocommerce_square_merchant_access_token' );

@@ -133,6 +133,10 @@ class WC_Square_Sync_To_Square_WordPress_Hooks {
 		
 		$wc_product = wc_get_product( $post_id );
 
+		if ( WC_Square_Utils::skip_product_sync( $post_id ) ) {
+			return;
+		}
+
 		if ( is_object( $wc_product ) && ! empty( $wc_product ) ) {
 			$this->square->sync_product( $wc_product, $this->sync_categories, $this->sync_inventory, $this->sync_images );
 		}
@@ -184,8 +188,9 @@ class WC_Square_Sync_To_Square_WordPress_Hooks {
 	 * @param WC_Product $wc_product
 	 */
 	public function on_product_set_stock( WC_Product $wc_product ) {
-
-		if ( $this->enabled ) {
+		$polling = get_option( 'wc_square_polling', false );
+		
+		if ( $this->enabled && ! $polling ) {
 
 			$this->square->sync_inventory( $wc_product );
 
@@ -199,8 +204,9 @@ class WC_Square_Sync_To_Square_WordPress_Hooks {
 	 * @param WC_Product_Variation $wc_variation
 	 */
 	public function on_variation_set_stock( WC_Product_Variation $wc_variation ) {
+		$polling = get_option( 'wc_square_polling', false );
 
-		if ( $this->enabled ) {
+		if ( $this->enabled && ! $polling ) {
 
 			$this->square->sync_inventory( $wc_variation->parent );
 

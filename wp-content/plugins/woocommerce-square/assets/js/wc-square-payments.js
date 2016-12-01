@@ -5,9 +5,44 @@
 
 	// create namespace to avoid any possible conflicts
 	$.wc_square_payments = {
-
 		init: function() {
+			// Checkout page
+			$( document.body ).on( 'updated_checkout', function() {
+				$.wc_square_payments.loadForm();	
+			});
+
+			// Pay order form page
+			if ( $( 'form#order_review' ).length ) {
+				$.wc_square_payments.loadForm();
+			}
+
+			var custom_element = square_params.custom_form_trigger_element;
+
+			// custom click trigger for 3rd party forms that initially hides the payment form
+			// such as multistep checkout plugins
+			if ( custom_element.length ) {
+				$( document.body ).on( 'click', custom_element, function() {
+					$.wc_square_payments.loadForm();		
+				});
+			}
+
+			// work around for iFrame not loading if elements being replaced is hidden
+			$( document.body ).on( 'click', '#payment_method_square', function() {
+				$( '.payment_box.payment_method_square' ).css( { 'display': 'block', 'visibility': 'visible', 'height': 'auto' } );	
+			});
+		},
+		loadForm: function() {
 			if ( $( '#payment_method_square' ).length ) {
+				// work around for iFrame not loading if elements being replaced is hidden
+				if ( ! $( '#payment_method_square' ).is( ':checked' ) ) {
+					$( '.payment_box.payment_method_square' ).css( { 'display': 'block', 'visibility': 'hidden', 'height': '0' } );
+				}
+
+				// destroy the form and rebuild on each init
+				if ( 'object' === $.type( wcSquarePaymentForm ) ) {
+					wcSquarePaymentForm.destroy();
+				}
+
 				wcSquarePaymentForm = new SqPaymentForm({
 					env: square_params.environment,
 					applicationId: square_params.application_id,
@@ -45,13 +80,17 @@
 								// append it to DOM
 								$( '.payment_method_square fieldset' ).eq(0).prepend( html );
 							} else {
-								var $form = $( 'form.checkout' );
+								var $form = $( 'form.woocommerce-checkout, form#order_review' );
 
 								// inject nonce to a hidden field to be submitted
 								$form.append( '<input type="hidden" class="square-nonce" name="square_nonce" value="' + nonce + '" />' );
 
 								$form.submit();
 							}
+						},
+
+						paymentFormLoaded: function() {
+							wcSquarePaymentForm.setPostalCode( $( '#billing_postcode' ).val() );
 						},
 
 						unsupportedBrowserDetected: function() {
@@ -65,23 +104,27 @@
 							$( '.payment_method_square fieldset' ).eq(0).prepend( html );
 						}
 					},
-					inputStyles: [
-						{
-							fontSize: '1.5em',
-							padding: '8px',
-							backgroundColor: '#ffffff'
-						},
-						{
-							mediaMaxWidth: '500px',
-							fontSize: '1em'
-						}
-					]
+					inputStyles: $.parseJSON( square_params.payment_form_input_styles )
 				});
 
 				wcSquarePaymentForm.build();
 
-				// when checkout form is submitted
-				$( 'form.checkout' ).on( 'checkout_place_order_square', function( event ) {
+				// when checkout form is submitted on checkout page
+				$( 'form.woocommerce-checkout' ).on( 'checkout_place_order_square', function( event ) {
+					// remove any error messages first
+					$( '.payment_method_square .woocommerce-error' ).remove();
+
+					if ( $( '#payment_method_square' ).is( ':checked' ) && $( 'input.square-nonce' ).size() === 0 ) {
+						wcSquarePaymentForm.requestCardNonce();
+
+						return false;
+					}
+
+					return true;
+				});
+
+				// when checkout form is submitted on pay order page
+				$( 'form#order_review' ).on( 'submit', function( event ) {
 					// remove any error messages first
 					$( '.payment_method_square .woocommerce-error' ).remove();
 
@@ -97,16 +140,16 @@
 				$( document.body ).on( 'checkout_error', function() {
 					$( 'input.square-nonce' ).remove();
 				});
+
+				// work around for iFrame not loading if elements being replaced is hidden
+				setTimeout( function() {
+					if ( ! $( '#payment_method_square' ).is( ':checked' ) ) {
+						$( '.payment_box.payment_method_square' ).css( { 'display': 'none', 'visibility': 'visible', 'height': 'auto' } );
+					}
+				}, 1000 );
 			}
 		}
 	}; // close namespace
-		
-	$( document.body ).on( 'updated_checkout', function() {
-		// destroy the form and rebuild on each init
-		if ( 'object' === $.type( wcSquarePaymentForm ) ) {
-			wcSquarePaymentForm.destroy();
-		}
 
-		$.wc_square_payments.init();
-	});
+	$.wc_square_payments.init();
 }( jQuery ) );

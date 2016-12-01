@@ -30,7 +30,7 @@ class WC_Square_Payments {
 
 		$gateway_settings = get_option( 'woocommerce_square_settings' );
 
-		$this->logging = $gateway_settings['logging'] ? true : false;
+		$this->logging = ! empty( $gateway_settings['logging'] ) ? true : false;
 
 		return true;
 	}
@@ -44,7 +44,9 @@ class WC_Square_Payments {
 		}
 
 		// live/production app id from Square account
-		define( 'SQUARE_APPLICATION_ID', 'sq0idp-wGVapF8sNt9PLrdj5znuKA' );
+		if ( ! defined( 'SQUARE_APPLICATION_ID' ) ) {
+			define( 'SQUARE_APPLICATION_ID', 'sq0idp-wGVapF8sNt9PLrdj5znuKA' );
+		}
 
 		// Includes
 		include_once( dirname( __FILE__ ) . '/class-wc-square-gateway.php' );

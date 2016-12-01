@@ -1,5 +1,41 @@
 *** WooCommerce Square Changelog ***
 
+2016.10.26 - version 1.0.11
+* Fix - When WC API is used, it can cause duplicate WC API Exception.
+
+2016.10.14 - version 1.0.10
+* Update - Make sure Square only works for US and CA merchants.
+
+2016.09.12 - version 1.0.9
+* Fix - Normalize price when syncing Square to WC to prevent errors.
+* Add - Option to disable sync per product.
+
+2016.09.08 - version 1.0.8
+* Add - WC Products CRUD to replace REST API for creating products to prevent interference with wc-api.
+* Add - Filter to add custom DOM elements for payments to render payment form "woocommerce_square_payment_form_trigger_element".
+* Fix - Payments token expiration was not handled correctly due to using API v2.
+
+2016.08.30 - version 1.0.7
+* Tweak - Replace all wp_remote_requests with raw cURL.
+* Fix - In IE, the browser won't replace iFrame form fields when it is hidden.
+
+2016.08.27 - version 1.0.6
+* Add - Clear cache/transient tool in system status->tool.
+* Fix - Prevent infinite loop when polling Square inventory.
+
+2016.08.25 - version 1.0.5
+* Fix - Image not syncing when using wp_remote_request. Changed to raw cURL.
+
+2016.08.19 - version 1.0.4
+* Tweak - Payment form field styles.
+* Add - woocommerce_square_payment_input_styles filter to allow manipulation of the form styles.
+* Fix - When duplicating product in WC, it replaces the original product on Square.
+* Fix - In FireFox, the browser won't replace iFrame form fields when it is hidden.
+
+2016.08.16 - version 1.0.3
+* Fix - When duplicating product in WC, it replaces the original product on Square.
+* Fix - oAuth tokens were not renewing properly.
+
 2016.08.04 - version 1.0.2
 * Update - HTTP protocol to version 1.1 to prevent timeouts.
 

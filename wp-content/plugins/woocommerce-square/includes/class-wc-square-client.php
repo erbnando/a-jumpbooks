@@ -125,7 +125,6 @@ class WC_Square_Client {
 		);
 
 		return apply_filters( 'woocommerce_square_request_args', $args );
-
 	}
 
 	/**
@@ -178,6 +177,13 @@ class WC_Square_Client {
 	 * @return bool|object|WP_Error
 	 */
 	public function request( $debug_label, $path, $method = 'GET', $body = null ) {
+		// we need to check for cURL
+		if ( ! function_exists( 'curl_init' ) ) {
+			WC_Square_Sync_Logger::log( 'cURL is not available. Sync aborted. Please contact your host to install cURL.' );
+
+			return false;
+		}
+
 		// The access token is required for all requests
 		$access_token = $this->get_access_token();
 
@@ -192,34 +198,34 @@ class WC_Square_Client {
 
 		while ( true ) {
 
-			$response = $this->http_request( $debug_label, $request_url, $method, $body );
+			$parsed_response = $this->http_request( $debug_label, $request_url, $method, $body );
 
-			if ( ! $response ) {
+			if ( ! $parsed_response ) {
 
-				return $response;
+				return $parsed_response;
 
 			}
 
-			$response_data = json_decode( wp_remote_retrieve_body( $response ) );
-
 			// A paged list result will be an array, so let's merge if we're already returning an array
-			if ( ( 'GET' === $method ) && is_array( $return_data ) && is_array( $response_data ) ) {
+			if ( ( 'GET' === $method ) && is_array( $return_data ) && is_array( $parsed_response['decoded_body'] ) ) {
 
-				$return_data = array_merge( $return_data, $response_data );
+				$return_data = array_merge( $return_data, $parsed_response['decoded_body'] );
 
 			} else {
 
-				$return_data = $response_data;
+				$return_data = $parsed_response['decoded_body'];
 
 			}
 
 			// Look for the next page, if specified
-			$link_header = wp_remote_retrieve_header( $response, 'Link' );
+			if ( ! preg_match( '/Link/', $parsed_response['headers'] ) ) {
+				return $return_data;
+			}
 
 			$rel_link_matches = array();
 
 			// Set up the next page URL for the following loop
-			if ( ( 'GET' === $method ) && preg_match( "|^<(.+)>;rel='next'$|", $link_header, $rel_link_matches ) ) {
+			if ( ( 'GET' === $method ) && preg_match( "|^<(.+)>;rel='next'$|", $parsed_response['headers'], $rel_link_matches ) ) {
 
 				$request_url = $rel_link_matches[1];
 				$body        = null;
@@ -262,28 +268,33 @@ class WC_Square_Client {
 
 		}
 
-		$request_args['method'] = $method;
-
 		// Make actual request in a retry loop
 		$try_count   = 1;
 		$max_retries = $this->request_retries();
 
 		while ( true ) {
 			$start_time = current_time( 'timestamp' );
-			$response   = wp_remote_request( untrailingslashit( $request_url ), $request_args );
-			$end_time   = current_time( 'timestamp' );
+
+			$parsed_response = $this->curl( $request_url, $request_args, true, $method );
+			
+			$end_time = current_time( 'timestamp' );
 
 			WC_Square_Sync_Logger::log( sprintf( '%s', $debug_label ), $start_time, $end_time );
-			
-			$decoded_response = json_decode( wp_remote_retrieve_body( $response ) );
 
-			// check for bad request and log it
-			if ( is_object( $decoded_response ) && ! empty( $decoded_response->type ) && preg_match( '/bad_request/', $decoded_response->type ) ) {
-				WC_Square_Sync_Logger::log( sprintf( '%s - %s', $decoded_response->type, $decoded_response->message ), $start_time, $end_time );
+			// check for error request and log it
+			if ( is_object( $parsed_response['decoded_body'] ) && ! empty( $parsed_response['decoded_body']->type ) ) {
+				if ( preg_match( '/bad_request/', $parsed_response['decoded_body']->type ) || preg_match( '/not_found/', $parsed_response['decoded_body']->type ) )  {
+					WC_Square_Sync_Logger::log( sprintf( '%s - %s', $parsed_response['decoded_body']->type, $parsed_response['decoded_body']->message ), $start_time, $end_time );
+
+					return false;
+				}
 			}
 
 			// handle expired tokens
-			if ( is_object( $decoded_response ) && ! empty( $decoded_response->type ) && 'oauth.expired' === $decoded_response->type ) {
+			if ( is_object( $parsed_response['decoded_body'] ) && 
+				( ! empty( $parsed_response['decoded_body']->type ) && 'oauth.expired' === $parsed_response['decoded_body']->type ) || 
+				( ! empty( $parsed_response['decoded_body']->errors ) && 'ACCESS_TOKEN_EXPIRED' === $parsed_response['decoded_body']->errors[0]->code ) ) {
+				
 				$oauth_connect_url = 'https://connect.woocommerce.com/renew/square';
 
 				if ( WC_SQUARE_ENABLE_STAGING ) {
@@ -292,55 +303,62 @@ class WC_Square_Client {
 				
 				$args = array(
 					'body' => array(
-						'token' => $this->access_token,
-					)
+						'token' => $this->access_token
+					),
+					'timeout' => 45,
 				);
 
-				$start_time     = current_time( 'timestamp' );
-				$oauth_response = wp_remote_request( $oauth_connect_url, $args );
-				$end_time       = current_time( 'timestamp' );
+				$start_time            = current_time( 'timestamp' );
+				$parsed_oauth_response = $this->curl( $oauth_connect_url, $args, false, 'POST' );
+				$end_time              = current_time( 'timestamp' );
 
-				$decoded_oauth_response = json_decode( wp_remote_retrieve_body( $oauth_response ) );
+				if ( $parsed_oauth_response['curl_error'] ) {
 
-				if ( is_wp_error( $oauth_response ) ) {
-
-					WC_Square_Sync_Logger::log( sprintf( 'Renewing expired token error - %s', $oauth_response->get_error_message() ), $start_time, $end_time );
+					WC_Square_Sync_Logger::log( sprintf( 'Renewing expired token error - %s', $parsed_oauth_response['curl_error'] ), $start_time, $end_time );
 					
 					return false;
 
-				} elseif ( $decoded_oauth_response->error ) {
+				} elseif ( is_object( $parsed_oauth_response['decoded_body'] ) && ! empty( $parsed_oauth_response['decoded_body']->error ) ) {
 
-					WC_Square_Sync_Logger::log( sprintf( 'Renewing expired token error - %s', $decoded_oauth_response->type ), $start_time, $end_time );
+					WC_Square_Sync_Logger::log( sprintf( 'Renewing expired token error - %s', $parsed_oauth_response['decoded_body']->type ), $start_time, $end_time );
 					
 					return false;
 
-				} else {
-					update_option( 'woocommerce_square_merchant_access_token', sanitize_text_field( urldecode( $decoded_oauth_response->access_token ) ) );
+				} elseif ( 500 === $parsed_oauth_response['response_code'] ) { 
+					WC_Square_Sync_Logger::log( sprintf( 'Renewing expired token error - Internal Server Error 500 from ' . $oauth_connect_url ), $start_time, $end_time );
+
+					return false;
+
+				} elseif ( is_object( $parsed_oauth_response['decoded_body'] ) && ! empty( $parsed_oauth_response['decoded_body']->access_token ) ) {
+					update_option( 'woocommerce_square_merchant_access_token', sanitize_text_field( urldecode( $parsed_oauth_response['decoded_body']->access_token ) ) );
 
 					// let's set the token instance again so settings option is refreshed
-					$this->set_access_token( sanitize_text_field( urldecode( $decoded_oauth_response->access_token ) ) );
+					$this->set_access_token( sanitize_text_field( urldecode( $parsed_oauth_response['decoded_body']->access_token ) ) );
+					$request_args['headers']['Authorization'] = 'Bearer ' . sanitize_text_field( $this->get_access_token() );
 
 					WC_Square_Sync_Logger::log( sprintf( 'Retrying with new refreshed token' ), $start_time, $end_time );
 
 					// start at the beginning again
 					continue;
+				} else {
+					WC_Square_Sync_Logger::log( sprintf( 'Renewing expired token error - Unknown Error' ), $start_time, $end_time );
+
+					return false;
 				}
 			}
 
 			// handle revoked tokens
-			if ( is_object( $decoded_response ) && ! empty( $decoded_response->type ) &&  'oauth.revoked' === $decoded_response->type ) {
+			if ( is_object( $parsed_response['decoded_body'] ) && ! empty( $parsed_response['decoded_body']->type ) && 'oauth.revoked' === $parsed_response['decoded_body']->type ) {
 				WC_Square_Sync_Logger::log( sprintf( 'Token is revoked!' ), $start_time, $end_time );
 				
 				return false;
 			}
 
-			if ( is_wp_error( $response ) ) {
-
-				WC_Square_Sync_Logger::log( sprintf( '(%s) Try #%d - %s', $debug_label, $try_count, $response->get_error_message() ), $start_time, $end_time );
-
+			if ( $parsed_response['curl_error'] ) {
+				WC_Square_Sync_Logger::log( sprintf( '(%s) Try #%d - %s', $debug_label, $try_count, $parsed_response['curl_error'] ), $start_time, $end_time );
 			} else {
 
-				return $response;
+				return $parsed_response;
 
 			}
 
@@ -358,4 +376,58 @@ class WC_Square_Client {
 
 	}
 
+	/**
+	 * Performs a cURL request
+	 * 
+	 * @version 1.0.7
+	 * @since 1.0.7
+	 */
+	private function curl( $request_url = '', $request_args = array(), $headers = false, $method = 'GET' ) {
+		$ch = curl_init();
+
+		curl_setopt( $ch, CURLOPT_URL, untrailingslashit( $request_url ) );
+		
+		switch( $method ) {
+			case 'POST':
+				curl_setopt( $ch, CURLOPT_POST, 1 );
+				break;
+			case 'PUT':
+				curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'PUT' );
+				break;
+			case 'DELETE':
+				curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'DELETE' );
+				break;
+		}
+
+		curl_setopt( $ch, CURLOPT_HEADER, true );
+
+		if ( $headers && ! empty( $request_args['headers'] ) ) {
+			$headers   = array();
+			$headers[] = 'Authorization: ' . $request_args['headers']['Authorization'];
+			$headers[] = 'Accept: ' . $request_args['headers']['Accept'];
+			$headers[] = 'Content-Type: ' . $request_args['headers']['Content-Type'];
+			$headers[] = 'User-Agent: ' . $request_args['user-agent'];
+
+			curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
+		}
+		
+		if ( ! empty( $request_args['body'] ) ) {
+			curl_setopt( $ch, CURLOPT_POSTFIELDS, $request_args['body'] );
+		}
+
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+		curl_setopt( $ch, CURLOPT_TIMEOUT, $request_args['timeout'] );
+		curl_setopt( $ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+
+		$response      = curl_exec( $ch );
+		$curl_error    = curl_error( $ch ) ? curl_error( $ch ) : false;
+		$response_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+		$header_len    = curl_getinfo( $ch, CURLINFO_HEADER_SIZE );
+		$headers       = substr( $response, 0, $header_len );
+		$body          = substr( $response, $header_len );
+
+		curl_close( $ch );
+
+		return array( 'curl_error' => $curl_error, 'response_code' => $response_code, 'headers' => $headers, 'body' => $body, 'decoded_body' => json_decode( $body ) );
+	}
 }

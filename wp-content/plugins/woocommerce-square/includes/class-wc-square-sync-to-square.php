@@ -21,9 +21,26 @@ class WC_Square_Sync_To_Square {
 	 * WC_Square_Sync_To_Square constructor.
 	 */
 	public function __construct( WC_Square_Connect $connect) {
+		add_filter( 'woocommerce_duplicate_product_exclude_meta', array( $this, 'duplicate_product_remove_meta' ) );
 
 		$this->connect = $connect;
 
+	}
+
+	/**
+	 * Removes certain product meta when product is duplicated in WC to
+	 * prevent overwriting the original item on Square.
+	 *
+	 * @access public
+	 * @since 1.0.4
+	 * @version 1.0.4
+	 * @return array $metas;
+	 */
+	public function duplicate_product_remove_meta( $metas ) {
+		$metas[] = '_square_item_id';
+		$metas[] = '_square_item_variation_id';
+
+		return $metas;
 	}
 
 	/**
@@ -362,28 +379,7 @@ class WC_Square_Sync_To_Square {
 
 		}
 
-		if ( empty( $square_item->master_image->id ) ) {
-
-			$result = $this->update_product_image( $wc_product, $square_item->id );
-
-		} else {
-
-			$wc_product_square_image_id = WC_Square_Utils::get_wc_product_image_square_id( $wc_product->id );
-
-			if ( $wc_product_square_image_id === $square_item->master_image->id ) {
-
-				WC_Square_Sync_Logger::log( sprintf( '[WC -> Square] Image Sync: Skipping WC Product %d (Square Image ID matches current).', $wc_product->id ) );
-				$result = true;
-
-			} else {
-
-				$result = $this->update_product_image( $wc_product, $square_item->id );
-
-			}
-
-		}
-
-		return $result;
+		return $this->update_product_image( $wc_product, $square_item->id );
 
 	}
 

@@ -38,12 +38,55 @@ class WC_Square_Connect {
 
 		add_action( 'woocommerce_square_bulk_syncing_square_to_wc', array( $this, 'clear_item_sku_map_cache' ) );
 
-		// Set up WC product API access
-		WC()->api->includes();
-		WC()->api->register_resources( new WC_API_Server( '/' ) );
+		$this->wc = new WC_Square_WC_Products();
 
-		$this->wc = WC()->api->WC_API_Products;
+		// add clear transients button in WC system tools
+		add_filter( 'woocommerce_debug_tools', array( $this, 'add_debug_tool' ) );
+	}
 
+	/**
+	 * Add debug tool button
+	 *
+	 * @access public
+	 * @since 1.0.5
+	 * @version 1.0.5
+	 * @return array $tools
+	 */
+	public function add_debug_tool( $tools ) {
+		if ( ! empty( $_GET['action'] ) && 'wcsquare_clear_transients' === $_GET['action'] ) {
+			$this->delete_all_caches();
+
+			echo '<div class="updated"><p>' . esc_html__( 'Square Sync Transients Cleared', 'woocommerce-square' ) . '</p></div>';
+		}
+
+		$tools['wcsquare_clear_transients'] = array(
+			'name'    => __( 'Square Sync Transients', 'woocommerce-square' ),
+			'button'  => __( 'Clear all transients/cache', 'woocommerce-square' ),
+			'desc'    => __( 'This will clear all Square Sync related transients/caches to start fresh. Useful when sync failed halfway through.', 'woocommerce-square' ),
+		);
+
+		return $tools;
+	}
+
+	/**
+	 * Deletes cached data ( both Square and WC )
+	 *
+	 * @access public
+	 * @since 1.0.5
+	 * @version 1.0.5
+	 * @return bool
+	 */
+	public function delete_all_caches() {
+
+		delete_transient( 'wc_square_processing_total_count' );
+
+		delete_transient( 'wc_square_processing_ids' );
+
+		delete_transient( 'wc_square_syncing_square_inventory' );
+
+		delete_transient( 'sq_wc_sync_current_process' );
+
+		return true;
 	}
 
 	/**
@@ -577,7 +620,7 @@ class WC_Square_Connect {
 
 		}
 
-		$response = $this->_client->request( 'Getting All Inventory', 'inventory' ); // default 5000 max limit
+		$response = $this->_client->request( 'Getting All Inventory', 'inventory' ); // default 1000 max limit
 
 		$square_inventory = array();
 
@@ -623,10 +666,6 @@ class WC_Square_Connect {
 	 * Refresh the Square Inventory cache.
 	 */
 	public function refresh_inventory_cache() {
-
 		delete_transient( self::INVENTORY_CACHE_KEY );
-
-		$this->get_square_inventory();
-
 	}
 }

@@ -187,6 +187,11 @@ class WC_Square_Sync_From_Square {
 			WC_Square_Utils::set_square_ids_on_wc_product_by_sku( $wc_product, $square_item );
 
 			if ( $include_inventory ) {
+				if ( WC_Square_Utils::skip_product_sync( $wc_product->id ) ) {
+					WC_Square_Sync_Logger::log( sprintf( '[Square -> WC] Syncing disabled for this WC Product %d for Square ID %s', $wc_product->id, $square_item->id ) );
+
+					return;
+				}
 
 				$this->sync_inventory( $wc_product, $square_item );
 
@@ -225,6 +230,10 @@ class WC_Square_Sync_From_Square {
 
 		$product_update = WC_Square_Utils::format_square_item_for_wc_api_create( $square_item, $include_category, $include_inventory, $include_image );
 
+		// note here that when creating variations via WC API, if the parent product
+		// is in the trash and the SKU matches the variation of the parent, the variations
+		// won't be created. This is because the WC API is not checking if variations are
+		// published.
 		$result = $this->connect->wc->create_product( array( 'product' => $product_update ) );
 
 		if ( is_wp_error( $result ) ) {
@@ -254,13 +263,19 @@ class WC_Square_Sync_From_Square {
 	 */
 	public function update_product( WC_Product $wc_product, $square_item, $include_category = false, $include_inventory = false, $include_image = false ) {
 
+		if ( WC_Square_Utils::skip_product_sync( $wc_product->id ) ) {
+			WC_Square_Sync_Logger::log( sprintf( '[Square -> WC] Syncing disabled for this WC Product %d for Square ID %s', $wc_product->id, $square_item->id ) );
+
+			return false;
+		}
+
 		$product_update = WC_Square_Utils::format_square_item_for_wc_api_update( $square_item, $wc_product, $include_category, $include_inventory, $include_image );
 
 		$result = $this->connect->wc->edit_product( $wc_product->id, array( 'product' => $product_update ) );
 
 		if ( is_wp_error( $result ) ) {
 
-			WC_Square_Sync_Logger::log( sprintf( '[Square -> WC] Error updating WC Product %d for Square ID %s: %s', $square_item->id, $result->get_error_message() ) );
+			WC_Square_Sync_Logger::log( sprintf( '[Square -> WC] Error updating WC Product %d for Square ID %s: %s', $wc_product->id, $square_item->id, $result->get_error_message() ) );
 
 		} elseif ( isset( $result['product']['id'] ) ) {
 
@@ -282,8 +297,6 @@ class WC_Square_Sync_From_Square {
 
 		$wc_variation_ids = WC_Square_Utils::get_stock_managed_wc_variation_ids( $wc_product );
 		$square_inventory = $this->connect->get_square_inventory();
-
-
 
 		foreach ( $wc_variation_ids as $wc_variation_id ) {
 
@@ -322,16 +335,28 @@ class WC_Square_Sync_From_Square {
 
 		$square_inventory = $this->connect->get_square_inventory();
 
+		// prevent infinity loop of setting stock when stock changes
+		add_option( 'wc_square_polling', 'yes' );
+
 		// hopefully there has been a manual sync prior so that square item id
 		// has already been saved in the product/variation metas to prevent
 		// unnecessary round trip requests to Square to find the SKU
 		foreach( $square_inventory as $variation_id => $stock ) {
 			$wc_product = WC_Square_Utils::get_wc_product_for_square_item_variation_id( $variation_id );
 
-			if ( is_object( $wc_product ) ) {
+			// check if we need to skip
+			if ( 'simple' === $wc_product->product_type ) {
+				$product_id = $wc_product->id;
+			} elseif ( 'variation' === $wc_product->product_type ) {
+				$product_id = $wc_product->parent->id;
+			}
+
+			if ( is_object( $wc_product ) && ! WC_Square_Utils::skip_product_sync( $product_id ) ) {
 				$wc_product->set_stock( (int) $stock );
 			}
 		}
+
+		delete_option( 'wc_square_polling' );
 
 		return true;
 	}

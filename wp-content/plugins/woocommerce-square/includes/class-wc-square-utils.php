@@ -80,7 +80,7 @@ class WC_Square_Utils {
 
 		$formatted = array(
 			'name'        => $wc_product->get_title(),
-			'description' => $wc_product->post->post_content,
+			'description' => wp_strip_all_tags( $wc_product->post->post_content ),
 			'visibility'  => 'PUBLIC',
 		);
 
@@ -219,9 +219,13 @@ class WC_Square_Utils {
 	public static function format_square_item_for_wc_api_create( $square_item, $include_category = false, $include_inventory = false, $include_image = false ) {
 
 		$formatted = array(
-			'title'       => $square_item->name,
-			'description' => ! empty( $square_item->description ) ? $square_item->description : '',
+			'title' => $square_item->name,
 		);
+
+		if ( apply_filters( 'woocommerce_square_sync_from_square_description', false ) ) {
+			$description              = ! empty( $square_item->description ) ? $square_item->description : '';
+			$formatted['description'] = $description;
+		}
 
 		if ( $include_image && isset( $square_item->master_image->url ) ) {
 
@@ -321,7 +325,7 @@ class WC_Square_Utils {
 	 */
 	public static function format_square_price_for_wc( $price = 0 ) {
 
-		return apply_filters( 'woocommerce_square_format_price', number_format( $price / 100, 2 ) );
+		return apply_filters( 'woocommerce_square_format_price', wc_format_decimal( absint( $price ) / 100 ) );
 
 	}
 
@@ -546,7 +550,7 @@ class WC_Square_Utils {
 
 		$wc_product_ids = get_posts( array(
 			'post_type'      => 'product',
-			'post_status'    => 'publish',
+			'post_status'    => 'publish', // this is ignored
 			'meta_query'     => array(
 				array(
 					'key'     => self::WC_PRODUCT_SQUARE_ID,
@@ -559,16 +563,19 @@ class WC_Square_Utils {
 		) );
 
 		if ( ! empty( $wc_product_ids ) ) {
+			$wc_product = wc_get_product( $wc_product_ids[0] );
 
-			return wc_get_product( $wc_product_ids[0] );
-
+			// only return publish products
+			if ( 'publish' === $wc_product->post->post_status ) {
+				return $wc_product;
+			}
 		}
 
 		$square_item_skus = self::get_square_item_skus( $square_item );
 
 		$wc_product_ids = get_posts( array(
 			'post_type'      => array( 'product', 'product_variation' ),
-			'post_status'    => 'publish',
+			'post_status'    => 'publish', // this is ignored
 			'meta_query'     => array(
 				array(
 					'key'     => '_sku',
@@ -584,13 +591,15 @@ class WC_Square_Utils {
 
 			$wc_product = wc_get_product( $wc_product_ids[0] );
 
-			if ( 'simple' === $wc_product->product_type ) {
+			if ( 'publish' === $wc_product->post->post_status ) {
+				if ( 'simple' === $wc_product->product_type ) {
 
-				return $wc_product;
+					return $wc_product;
 
+				}
+
+				return $wc_product->parent;
 			}
-
-			return $wc_product->parent;
 
 		}
 
@@ -605,10 +614,9 @@ class WC_Square_Utils {
 	 * @return bool|WC_Product Corresponding WC_Product on successful match, boolean false otherwise.
 	 */
 	public static function get_wc_product_for_square_item_variation_id( $square_variation_id ) {
-
 		$wc_product_ids = get_posts( array(
 			'post_type'      => array( 'product', 'product_variation' ),
-			'post_status'    => 'publish',
+			'post_status'    => 'publish', // this is ignored
 			'meta_query'     => array(
 				array(
 					'key'     => self::WC_VARIATION_SQUARE_ID,
@@ -621,8 +629,12 @@ class WC_Square_Utils {
 		) );
 
 		if ( ! empty( $wc_product_ids ) ) {
+			$product = wc_get_product( $wc_product_ids[0] );
 
-			return wc_get_product( $wc_product_ids[0] );
+			// only return publish products
+			if ( 'publish' === $product->post->post_status ) {
+				return $product;
+			}
 
 		}
 
@@ -795,6 +807,26 @@ class WC_Square_Utils {
 	 */
 	public static function is_square_item_found( $square_item ) {
 		if ( is_object( $square_item ) && 'not_found' !== $square_item->type ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks to see if product disable sync is enabled
+	 *
+	 * @param int $product_id parent product id
+	 * @return bool
+	 */
+	public static function skip_product_sync( $product_id = null ) {
+		if ( null === $product_id ) {
+			return false;
+		}
+
+		$skip_sync = get_post_meta( $product_id, '_wcsquare_disable_sync', true );
+
+		if ( 'yes' === $skip_sync ) {
 			return true;
 		}
 

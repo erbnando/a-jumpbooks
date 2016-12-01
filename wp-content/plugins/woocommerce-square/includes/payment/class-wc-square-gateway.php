@@ -85,26 +85,33 @@ class WC_Square_Gateway extends WC_Payment_Gateway {
 	 * Check if this gateway is enabled
 	 */
 	public function is_available() {
+		$is_available = true;
+
 		if ( $this->enabled ) {
-			if ( ! WC_SQUARE_ENABLE_STAGING && is_checkout() && ! is_ssl() ) {
-				return false;
+			if ( ! WC_SQUARE_ENABLE_STAGING && ! wc_checkout_is_https() ) {
+				$is_available = false;
 			}
 
 			if ( ! WC_SQUARE_ENABLE_STAGING && empty( $this->token ) ) {
-				return false;
+				$is_available = false;
 			}
 
-			return true;
+			// Square only supports US and Canada for now.
+			if ( ( 'US' !== WC()->countries->get_base_country() && 'CA' !== WC()->countries->get_base_country() ) || ( 'USD' !== get_woocommerce_currency() && 'CAD' !== get_woocommerce_currency() ) ) {
+				$is_available = false;
+			}
+		} else {
+			$is_available = false;
 		}
 
-		return false;
+		return apply_filters( 'woocommerce_square_payment_gateway_is_available', $is_available );
 	}
 
 	/**
 	 * Initialize Gateway Settings Form Fields
 	 */
 	public function init_form_fields() {
-		$this->form_fields = apply_filters( 'wc_square_gateway_settings', array(
+		$this->form_fields = apply_filters( 'woocommerce_square_gateway_settings', array(
 			'enabled' => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-square' ),
 				'label'       => __( 'Enable Square', 'woocommerce-square' ),
@@ -167,30 +174,61 @@ class WC_Square_Gateway extends WC_Payment_Gateway {
 				    ),
 				);
 				if ( $this->description ) {
-					echo apply_filters( 'wc_square_description', wpautop( wp_kses( $this->description, $allowed ) ) );
+					echo apply_filters( 'woocommerce_square_description', wpautop( wp_kses( $this->description, $allowed ) ) );
 				}
 			?>
 			<p class="form-row form-row-wide">
 				<label for="sq-card-number"><?php esc_html_e( 'Card Number', 'woocommerce-square' ); ?> <span class="required">*</span></label>
-				<input id="sq-card-number" class="input-text wc-credit-card-form-card-number" type="text" maxlength="20" autocomplete="off" placeholder="•••• •••• •••• ••••" name="<?php echo esc_attr( $this->id ); ?>-card-number" />
+				<input id="sq-card-number" type="text" maxlength="20" autocomplete="off" placeholder="•••• •••• •••• ••••" name="<?php echo esc_attr( $this->id ); ?>-card-number" />
 			</p>
 			
 			<p class="form-row form-row-first">
 				<label for="sq-expiration-date"><?php esc_html_e( 'Expiry (MM/YY)', 'woocommerce-square' ); ?> <span class="required">*</span></label>
-				<input id="sq-expiration-date" class="input-text wc-credit-card-form-card-expiry" type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'MM / YY', 'woocommerce-square' ); ?>" name="<?php echo esc_attr( $this->id ); ?>-card-expiry" />
+				<input id="sq-expiration-date" type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'MM / YY', 'woocommerce-square' ); ?>" name="<?php echo esc_attr( $this->id ); ?>-card-expiry" />
 			</p>
 
 			<p class="form-row form-row-last">
 				<label for="sq-cvv"><?php esc_html_e( 'Card Code', 'woocommerce-square' ); ?> <span class="required">*</span></label>
-				<input id="sq-cvv" class="input-text wc-credit-card-form-card-cvv" type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'CVV', 'woocommerce-square' ); ?>" name="<?php echo esc_attr( $this->id ); ?>-card-cvv" />
+				<input id="sq-cvv" type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'CVV', 'woocommerce-square' ); ?>" name="<?php echo esc_attr( $this->id ); ?>-card-cvv" />
 			</p>
 
-			<p class="form-row form-row-first">
+			<p class="form-row form-row-wide">
 				<label for="sq-postal-code"><?php esc_html_e( 'Card Postal Code', 'woocommerce-square' ); ?> <span class="required">*</span></label>
-				<input id="sq-postal-code" class="input-text wc-credit-card-form-card-postal-code" type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Card Postal Code', 'woocommerce-square' ); ?>" name="<?php echo esc_attr( $this->id ); ?>-card-postal-code" />
+				<input id="sq-postal-code" type="text" autocomplete="off" placeholder="<?php esc_attr_e( 'Card Postal Code', 'woocommerce-square' ); ?>" name="<?php echo esc_attr( $this->id ); ?>-card-postal-code" />
 			</p>
 		</fieldset>
 		<?php
+	}
+
+	/**
+	 * Get payment form input styles.
+	 * This function is pass to the JS script in order to style the
+	 * input fields within the iFrame.
+	 *
+	 * Possible styles are: mediaMinWidth, mediaMaxWidth, backgroundColor, boxShadow,
+	 * color, fontFamily, fontSize, fontWeight, lineHeight and padding.
+	 *
+	 * @since 1.0.4
+	 * @version 1.0.4
+	 * @access public
+	 * @return json $styles
+	 */
+	public function get_input_styles() {
+		$styles = array(
+			array(
+				'fontSize'        => '1.2em',
+				'padding'         => '.618em',
+				'fontWeight'      => 400,
+				'backgroundColor' => 'transparent',
+				'lineHeight'      => 1.7
+			),
+			array(
+				'mediaMaxWidth' => '1200px',
+				'fontSize'      => '1em'
+			)
+		);
+
+		return apply_filters( 'woocommerce_square_payment_input_styles', wp_json_encode( $styles ) );
 	}
 
 	/**
@@ -216,6 +254,8 @@ class WC_Square_Gateway extends WC_Payment_Gateway {
 			'placeholder_card_expiration'  => __( 'MM / YY', 'woocommerce-square' ),
 			'placeholder_card_cvv'         => __( 'CVV', 'woocommerce-square' ),
 			'placeholder_card_postal_code' => __( 'Card Postal Code', 'woocommerce-square' ),
+			'payment_form_input_styles'    => esc_js( $this->get_input_styles() ),
+			'custom_form_trigger_element'  => apply_filters( 'woocommerce_square_payment_form_trigger_element', esc_js( '' ) ),
 		) );
 
 		wp_enqueue_script( 'woocommerce-square' );
@@ -233,13 +273,13 @@ class WC_Square_Gateway extends WC_Payment_Gateway {
 		$nonce    = isset( $_POST['square_nonce'] ) ? wc_clean( $_POST['square_nonce'] ) : '';
 		$currency = $order->get_order_currency();
 
-		$this->log( "Info: Begin processing payment for order {$order_id} for the amount of {$order->order_total}" );
+		$this->log( "Info: Begin processing payment for order {$order_id} for the amount of {$order->get_total()}" );
 
 		try {
 			$data = array(
 				'idempotency_key' => uniqid(),
 				'amount_money'    => array( 
-					'amount'   => $this->format_amount( $order->order_total, $currency ),
+					'amount'   => $this->format_amount( $order->get_total(), $currency ),
 					'currency' => $currency,
 				),
 				'reference_id'        => (string) $order->get_order_number(),
@@ -299,6 +339,12 @@ class WC_Square_Gateway extends WC_Payment_Gateway {
 				$errors = print_r( $result->errors, true );
 
 				throw new Exception( $errors );
+			}
+
+			if ( empty( $result ) ) {
+				wc_add_notice( __( 'Error: Square was unable to complete the transaction. Please try again later or use another means of payment.', 'woocommerce-square' ), 'error' );
+
+				throw new Exception( 'Unknown Error' );
 			}
 
 			if ( 'CAPTURED' === $result->transaction->tenders[0]->card_details->status ) {

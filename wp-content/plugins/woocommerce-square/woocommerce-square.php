@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: WooCommerce Square
- * Version: 1.0.2
- * Plugin URI: https://www.woocommerce.com/products/square/
+ * Version: 1.0.11
+ * Plugin URI: https://woocommerce.com/products/square/
  * Description: Adds ability to sync inventory between WooCommerce and Square POS. In addition, you can also make purchases through the Square payment gateway.
  * Author: Automattic
- * Author URI: http://www.woocommerce.com/
+ * Author URI: https://www.woocommerce.com/
  * Requires at least: 4.5.0
- * Tested up to: 4.5.3
+ * Tested up to: 4.6.0
  * Requires WooCommerce at least: 2.6.0
  * Text Domain: woocommerce-square
  * Domain Path: /languages
@@ -90,7 +90,7 @@ class Woocommerce_Square {
 	 * @return bool
 	 */
 	public function __clone() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woocommerce-square' ), '1.0.2' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woocommerce-square' ), '1.0.11' );
 	}
 
 	/**
@@ -102,7 +102,7 @@ class Woocommerce_Square {
 	 * @return bool
 	 */
 	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woocommerce-square' ), '1.0.2' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'woocommerce-square' ), '1.0.11' );
 	}
 
 	/**
@@ -115,6 +115,7 @@ class Woocommerce_Square {
 	}
 
 	public function bootstrap() {
+		add_action( 'admin_notices', array( $this, 'check_environment' ) );
 
 		$this->define_constants();
 		$this->includes();
@@ -160,7 +161,7 @@ class Woocommerce_Square {
 	 * @return bool
 	 */
 	public function define_constants() {
-		define( 'WC_SQUARE_VERSION', '1.0.2' );
+		define( 'WC_SQUARE_VERSION', '1.0.11' );
 		define( 'WC_SQUARE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 		define( 'WC_SQUARE_PLUGIN_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
 
@@ -170,6 +171,60 @@ class Woocommerce_Square {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check if country is set to allowed country.
+	 *
+	 * @since 1.0.10
+	 * @version 1.0.10
+	 */
+	public function is_allowed_countries() {
+		if ( 'US' !== WC()->countries->get_base_country() && 'CA' !== WC()->countries->get_base_country() ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if currency is set to allowed currency.
+	 *
+	 * @since 1.0.10
+	 * @version 1.0.10
+	 */
+	public function is_allowed_currencies() {
+		if ( 'USD' !== get_woocommerce_currency() && 'CAD' !== get_woocommerce_currency() ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check required environment
+	 *
+	 * @access public
+	 * @since 1.0.10
+	 * @version 1.0.10
+	 * @return null
+	 */
+	public function check_environment() {
+		if ( ! $this->is_allowed_countries() ) {
+			$admin_page = 'wc-settings';
+
+			echo '<div class="error">
+				<p>' . sprintf( __( 'Square requires that the <a href="%s">base country/region</a> is the United States or Canada.', 'woocommerce-square' ), admin_url( 'admin.php?page=' . $admin_page . '&tab=general' ) ) . '</p>
+			</div>'; 
+		}
+
+		if ( ! $this->is_allowed_currencies() ) {
+			$admin_page = 'wc-settings';
+
+			echo '<div class="error">
+				<p>' . sprintf( __( 'Square requires that the <a href="%s">currency</a> is set to USD or CAD.', 'woocommerce-square' ), admin_url( 'admin.php?page=' . $admin_page . '&tab=general' ) ) . '</p>
+			</div>'; 
+		}
 	}
 
 	/**
@@ -184,10 +239,11 @@ class Woocommerce_Square {
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-install.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-deactivation.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-sync-logger.php' );
+		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-wc-products.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-connect.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-sync-to-square.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-sync-from-square.php' );
-		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-admin-integration.php' );
+		require_once( dirname( __FILE__ ) . '/includes/admin/class-wc-square-admin-integration.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-sync-to-square-wp-hooks.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-client.php' );
 		require_once( dirname( __FILE__ ) . '/includes/class-wc-square-utils.php' );
@@ -196,7 +252,8 @@ class Woocommerce_Square {
 		require_once( dirname( __FILE__ ) . '/includes/payment/class-wc-square-payments.php' );
 
 		if ( is_admin() ) {
-			require_once( dirname( __FILE__ ) . '/includes/class-wc-square-bulk-sync-handler.php' );
+			require_once( dirname( __FILE__ ) . '/includes/admin/class-wc-square-bulk-sync-handler.php' );
+			require_once( dirname( __FILE__ ) . '/includes/admin/class-wc-square-admin-product-meta-box.php' );
 		}
 
 	}
@@ -210,8 +267,10 @@ class Woocommerce_Square {
 	 * @return bool
 	 */
 	public function include_integration( $integrations ) {
-
-		$integrations[] = $this->integration;
+		// Square only supports US and Canada for now.
+		if ( $this->is_allowed_currencies() && $this->is_allowed_countries() ) {
+			$integrations[] = $this->integration;
+		}
 
 		return $integrations;
 
