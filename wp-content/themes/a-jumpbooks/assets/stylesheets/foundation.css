@@ -7986,11 +7986,13 @@ ul.wc_payment_methods {
 :focus {
   outline: none; }
 
-.payment_method_square fieldset iframe {
-  height: 44px !important; }
-  @media screen and (max-width: 500px) {
-    .payment_method_square fieldset iframe {
-      height: 36px !important; } }
+@media screen and (min-width: 1201px) {
+  .payment_method_square fieldset iframe {
+    height: 55px !important; } }
+
+@media screen and (min-width: 501px) and (max-width: 1200px) {
+  .payment_method_square fieldset iframe {
+    height: 46px !important; } }
 
 #front-hero {
   background: url("../images/demo/hero-bg-foundation-6-small.svg") bottom center;

@@ -1579,9 +1579,11 @@ ul.wc_payment_methods {
 .payment_method_square {
 	fieldset {
 		iframe {
-			height: 44px!important;
-			@media screen and (max-width: 500px) {
-				height: 36px!important;
+			@media screen and (min-width: 1201px) {
+				height: 55px!important;
+			}
+			@media screen and (min-width: 501px) and (max-width: 1200px) {
+				height: 46px!important;
 			}
 		}
 	}

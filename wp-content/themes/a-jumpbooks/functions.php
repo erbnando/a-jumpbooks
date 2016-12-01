@@ -236,7 +236,6 @@ function remove_checkout_validation( $fields ) {
     return $fields;
 }
 
-/*
 add_filter( 'cron_schedules', 'add_minutely_schedule' );
 function add_minutely_schedule( $schedules ) {
     $schedules['minutely'] = array(
@@ -245,7 +244,6 @@ function add_minutely_schedule( $schedules ) {
     );
     return $schedules;
 }
-*/
 
 // Add function to register event to WordPress init
 add_action( 'init', 'wc_system_report');
@@ -285,8 +283,6 @@ $timestamp = wp_next_scheduled( 'daily_wc_system_report' );
 wp_unschedule_event( $timestamp, 'daily_wc_system_report' );
 */
 
-/*
-echo '<pre>'; print_r( _get_cron_array() ); echo '</pre>';
-*/
+// echo '<pre style="display: none;">'; print_r( _get_cron_array() ); echo '</pre>';
 
 ?>
